@@ -42,13 +42,25 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    client.connect();
 
 
     const destinationCollection = client.db("travelJournal").collection("destination")
     const quoteCollection = client.db("travelJournal").collection("quote");
+
     const cartCollection = client.db("travelJournal").collection("carts");
+
     const usersCollection = client.db("travelJournal").collection("users");
+
+    const popularDestinationCollection = client.db("travelJournal").collection("popularDestination");
+
+    const vanueCollection = client.db("travelJournal").collection("vanue");
+
+    const vanueBookedCollection = client.db("travelJournal").collection("vanueBooked");
+
+    const articleCollection = client.db("travelJournal").collection("article");
+
+    const guideCollection = client.db("travelJournal").collection("guide");
 
 
     // JWT Token
@@ -60,16 +72,16 @@ async function run() {
 
 
     // verifyAdmin start
-// Warning: use verifyJWT before using verifyAdmin
-const verifyAdmin = async (req, res, next) => {
-  const email = req.decoded.email;
-  const query = { email: email }
-  const user = await usersCollection.findOne(query);
-  if (user?.role !== 'admin') {
-    return res.status(403).send({ error: true, message: 'forbidden message' });
-  }
-  next();
-}
+    // Warning: use verifyJWT before using verifyAdmin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
 
 
     // destination data load
@@ -80,7 +92,7 @@ const verifyAdmin = async (req, res, next) => {
 
 
     // destination post
-    app.post('/destination',verifyJWT, verifyAdmin,  async (req, res)=>{
+    app.post('/destination', verifyJWT, verifyAdmin, async (req, res) => {
       const newItem = req.body;
       const result = await destinationCollection.insertOne(newItem);
       res.send(result)
@@ -183,7 +195,7 @@ const verifyAdmin = async (req, res, next) => {
 
 
     // users related api get
-    app.get('/users',  verifyJWT, verifyAdmin, async(req, res) => {
+    app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
     })
@@ -231,6 +243,124 @@ const verifyAdmin = async (req, res, next) => {
       res.send(result);
     })
 
+
+    // get popular destination
+    app.get("/popularDestination", async (req, res) => {
+      const result = await popularDestinationCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    // single data load from popular destination
+    app.get('/popularDestination/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const options = {
+        projection: {
+
+          name: 1,
+          price: 1,
+          exploring: 1,
+          adventure: 1,
+          food: 1,
+          seeAndDo: 1,
+          around: 1,
+          img1: 1,
+          img2: 1,
+          img3: 1,
+          stay: 1
+
+        }
+      }
+
+      const result = await popularDestinationCollection.findOne(query, options);
+      res.send(result);
+    });
+
+
+    // get vanue
+    app.get("/vanue", async (req, res) => {
+      const result = await vanueCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    // single data load from popular destination
+    app.get('/vanue/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const options = {
+        projection: {
+
+          price: 1,
+          name: 1,
+          place: 1,
+          day1: 1,
+          day2: 1,
+          day3: 1,
+          day4: 1,
+          img1: 1,
+          img2: 1,
+          img3: 1
+
+        }
+      }
+
+      const result = await vanueCollection.findOne(query, options);
+      res.send(result);
+    });
+
+
+    // post booking vanue
+    app.post('/bookedVanue', async (req, res) => {
+      const newItem = req.body;
+      const result = await vanueBookedCollection.insertOne(newItem);
+      res.send(result);
+    })
+
+
+    // get booking vanue
+    app.get("/bookedVanue", async (req, res) => {
+      const result = await vanueBookedCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    // get article   
+    app.get('/article', async(req, res)=>{
+      const result = await articleCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    // single data load from article
+    app.get('/article/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const options = {
+        projection: {
+
+          date: 1,
+          headLine: 1,
+          img: 1,
+          detail: 1
+
+        }
+      }
+
+      const result = await articleCollection.findOne(query, options);
+      res.send(result);
+    });
+
+
+    // get guide  
+    app.get('/guide', async(req, res)=>{
+      const result = await guideCollection.find().toArray();
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
